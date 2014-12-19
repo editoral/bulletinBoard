@@ -5,19 +5,20 @@ import mpi.MPI;
 public class Runner {
 
 	public static void main(String[] args) {
-		//TimeStamp.setSize(3);
-		//System.out.println("halloWelt");
+		System.out.println("Booting " + MPI.COMM_WORLD.Rank());
+		TimeStamp.setSize(2);
+		RM.minGossipInterval = 2000;
 		RM rm;
 		FE fe;
 		int rank = MPI.COMM_WORLD.Rank();
 		int[] rms = {1, 2};
 		switch (rank) {
 			case 1 : 
-				rm = new RM(1);
+				rm = new RM(1, rms);
 				rm.listenerLoop();
 				break;
 			case 2 :
-				rm = new RM(2);
+				rm = new RM(2, rms);
 				rm.listenerLoop();
 				break;
 			case 3 :

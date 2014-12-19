@@ -61,8 +61,12 @@ public class FE {
 		buffer[0] = type;
 		buffer[1] = u;
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);
-		buffer = new Object[2];
-		MPI.COMM_WORLD.Recv(buffer, 0, 2, MPI.OBJECT, targetRM, 0);
+		System.out.println(rank + " Im a FE and I sended an Update now waiting");
+		Object[] buffer2 = new Object[2];
+		MPI.COMM_WORLD.Recv(buffer2, 0, 2, MPI.OBJECT, targetRM, 0);
+		System.out.println(rank + " Im a FE and i got an Update Response");
+		Update respU = (Update) buffer2[1];
+		prev = prev.max(respU.prev);
 	}
 	
 	private void sendResponse() {
@@ -82,6 +86,10 @@ public class FE {
 		
 		buffer[0] = type;
 		buffer[1] = q;
-		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);		
+		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);	
+		System.out.println(rank + " Im a FE and i sended an Query to " + targetRM);	
+		Object[] bufferR = new Object[2];
+		MPI.COMM_WORLD.Recv(bufferR, 0, 2, MPI.OBJECT, targetRM, 0);
+		System.out.println(rank + " Im a FE and i got an Query Response from " + targetRM);
 	}
 }
