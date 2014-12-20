@@ -14,4 +14,6 @@ public class LogRecord {
 		prev = u.prev;
 		cid = u.cid;
 	}
+	
+	
 }

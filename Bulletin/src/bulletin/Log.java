@@ -17,6 +17,10 @@ public class Log {
 		return logRec;
 	}
 	
+	public void insertLog(Log log) {
+		
+	}
+	
 	public LogRecord getRandomRecord() {
 		int index = rand.nextInt(recs.size());
 		return recs.get(index);

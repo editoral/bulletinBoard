@@ -19,9 +19,14 @@ public class RM {
 	
 	
 	public RM(int id, int[] RMs) {
+		System.out.println(rank + " Im a RM and got intantiated");
 		this.id = id;
 		executeGossipTime = System.currentTimeMillis() + executeGossipTime;
 		rms = RMs;
+		replicaTS = new TimeStamp();
+		valueTS = new TimeStamp();
+		updateLog = new Log();
+		queue = new PendingQueryQueue();
 	}
 	
 	public void listenerLoop() {
@@ -59,6 +64,7 @@ public class RM {
 	private void handleUpdate(Object obj, Status stat) {
 		System.out.println(rank + "Got an Update from " + stat.source);
 		Update u = (Update) obj;
+		System.out.println(rank + " DEBUG " + u.op.title);
 		replicaTS.incrementAtIndex(id);
 		TimeStamp ts = u.prev;
 		ts.setValAtIndex(id, replicaTS.getValAtIndex(id));
@@ -105,6 +111,9 @@ public class RM {
 	private void handleGossip(Object obj) {
 		System.out.println(rank + "Got a Gossip");
 		Gossip g = (Gossip) obj;
+		updateLog.insertLog(g.log);
+		replicaTS = replicaTS.max(g.ts);
+		
 	}
 
 	private void execute(Update u) {

@@ -60,7 +60,7 @@ public class FE {
 		
 		buffer[0] = type;
 		buffer[1] = u;
-		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);
+		MPI.COMM_WORLD.Send(buffer, 0, 1, MPI.OBJECT, targetRM, 0);
 		System.out.println(rank + " Im a FE and I sended an Update now waiting");
 		Object[] buffer2 = new Object[2];
 		MPI.COMM_WORLD.Recv(buffer2, 0, 2, MPI.OBJECT, targetRM, 0);
