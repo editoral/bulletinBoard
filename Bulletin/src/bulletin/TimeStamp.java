@@ -1,6 +1,8 @@
 package bulletin;
 
-public class TimeStamp implements Comparable {
+import java.io.Serializable;
+
+public class TimeStamp implements Comparable, Serializable {
 	private static int size = 0;
 	private int[] vektor;
 	public TimeStamp() {

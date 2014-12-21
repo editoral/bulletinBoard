@@ -1,10 +1,11 @@
 package bulletin;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import mpi.MPI;
 
-public class FE {
+public class FE implements Serializable {
 	private int id;
 	private Random rand;
 	private int rank = MPI.COMM_WORLD.Rank();
@@ -16,6 +17,7 @@ public class FE {
 		this.id = id;
 		this.rms = RMs;
 		rand = new Random();
+		prev = new TimeStamp();
 	}
 	
 	public void start() {
@@ -60,7 +62,8 @@ public class FE {
 		
 		buffer[0] = type;
 		buffer[1] = u;
-		MPI.COMM_WORLD.Send(buffer, 0, 1, MPI.OBJECT, targetRM, 0);
+		System.out.println(rank + " DEBUG Im a FE and I sended an Update now waiting");
+		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);
 		System.out.println(rank + " Im a FE and I sended an Update now waiting");
 		Object[] buffer2 = new Object[2];
 		MPI.COMM_WORLD.Recv(buffer2, 0, 2, MPI.OBJECT, targetRM, 0);

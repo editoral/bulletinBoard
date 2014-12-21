@@ -1,6 +1,8 @@
 package bulletin;
 
-public class LogRecord {
+import java.io.Serializable;
+
+public class LogRecord implements Serializable {
 	public int rm;
 	public TimeStamp ts;
 	public Message op;

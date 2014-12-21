@@ -1,14 +1,16 @@
 package bulletin;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class Log {
+public class Log implements Serializable {
 	private ArrayList<LogRecord> recs;
 	private Random rand;
 	
 	public Log() {
 		rand = new Random();
+		recs = new ArrayList<LogRecord>();
 	}
 
 	public LogRecord createEntry(int rm, TimeStamp ts, Update u) {

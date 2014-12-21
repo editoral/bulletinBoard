@@ -1,5 +1,7 @@
 package bulletin;
 
-public enum MessageType {
+import java.io.Serializable;
+
+public enum MessageType implements Serializable {
 	UPDATE, QUERY, GOSSIP
 }

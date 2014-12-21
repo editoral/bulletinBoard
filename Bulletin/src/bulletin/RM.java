@@ -1,10 +1,11 @@
 package bulletin;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import mpi.*;
 
-public class RM {
+public class RM implements Serializable{
 	public static long minGossipInterval = 1000;
 	private int rank = MPI.COMM_WORLD.Rank();
 	private int id;
@@ -43,7 +44,7 @@ public class RM {
 		}
 		dispatch(buffer, stat);
 		if(executeGossipTime < System.currentTimeMillis()) {
-			System.out.println(rank + "It is Time for Gossip!");
+			System.out.println(rank + " It is Time for Gossip!");
 			sendGossip();
 		}
 		listenerLoop();
@@ -51,6 +52,8 @@ public class RM {
 	
 	private void dispatch(Object[] buffer, Status stat) {
 		MessageType type = (MessageType) buffer[0];
+		System.out.println(rank + " DEBUG " + type);
+		System.out.println(rank + " DEBUG " + buffer[1]);
 		switch (type) {
 			case UPDATE:handleUpdate(buffer[1], stat);
 						break;
@@ -62,9 +65,9 @@ public class RM {
 	}
 	
 	private void handleUpdate(Object obj, Status stat) {
-		System.out.println(rank + "Got an Update from " + stat.source);
+		System.out.println(rank + " Got an Update from " + stat.source);
 		Update u = (Update) obj;
-		System.out.println(rank + " DEBUG " + u.op.title);
+		System.out.println(rank + " DEBUG " + u.prev);
 		replicaTS.incrementAtIndex(id);
 		TimeStamp ts = u.prev;
 		ts.setValAtIndex(id, replicaTS.getValAtIndex(id));
@@ -76,14 +79,14 @@ public class RM {
 		buffer[0] = type;
 		buffer[1] = respU;
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, stat.source, 0);
-		System.out.println(rank + "I sended an UpdateResponse to " + stat.source);
+		System.out.println(rank + " I sended an UpdateResponse to " + stat.source);
 		if (u.prev.isAbsoluteSmallerOrEqual(valueTS)) {
 			execute(u);	
 		}
 	}
 	
 	private void handleQuery(Object obj, Status stat) {
-		System.out.println(rank + "Got a Query form " + stat.source);
+		System.out.println(rank + " Got a Query form " + stat.source);
 		Query q = (Query) obj;
 		if (q.prev.isAbsoluteSmallerOrEqual(valueTS)) {
 			sendQueryResponse(stat.source);
@@ -103,13 +106,13 @@ public class RM {
 			Object[] buffer = new Object[2];
 			buffer[0] = MessageType.GOSSIP;
 			buffer[1] = g;
-			System.out.println(rank + "I'am going to send a Gossip to " + target);
+			System.out.println(rank + " I'am going to send a Gossip to " + target);
 			MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);
 		}
 	}
 	
 	private void handleGossip(Object obj) {
-		System.out.println(rank + "Got a Gossip");
+		System.out.println(rank + " Got a Gossip");
 		Gossip g = (Gossip) obj;
 		updateLog.insertLog(g.log);
 		replicaTS = replicaTS.max(g.ts);
@@ -123,7 +126,7 @@ public class RM {
 	}
 	
 	private void sendQueryResponse(int target) {
-		System.out.println(rank + "I'am ready to send an UpdateResponse to " + target);
+		System.out.println(rank + " I'am ready to send an UpdateResponse to " + target);
 		Object[] buffer = new Object[2];
 		MessageType type = MessageType.QUERY;
 		Query q = new Query();
@@ -132,7 +135,7 @@ public class RM {
 		buffer[0] = type;
 		buffer[1] = q;
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);		
-		System.out.println(rank + "I sended an UpdateResponse to " + target);
+		System.out.println(rank + " I sended an UpdateResponse to " + target);
 	}
 	
 	

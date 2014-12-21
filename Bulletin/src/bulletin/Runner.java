@@ -44,19 +44,19 @@ public class Runner {
 		int[] rms = {1, 2};
 		switch (rank) {
 			case 0 : 
-				rm = new RM(1, rms);
+				rm = new RM(0, rms);
 				rm.listenerLoop();
 				break;
 			case 1 :
-				rm = new RM(2, rms);
+				rm = new RM(1, rms);
 				rm.listenerLoop();
 				break;
 			case 2 :
-				fe = new FE(1, rms);
+				fe = new FE(0, rms);
 				fe.start();
 				break;
 			case 3 :
-				fe = new FE(2, rms);
+				fe = new FE(1, rms);
 				fe.start();
 				
 		}

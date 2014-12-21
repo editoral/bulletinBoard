@@ -1,8 +1,9 @@
 package bulletin;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Executed {
+public class Executed implements Serializable {
 	private ArrayList<TimeStamp> stamps;
 	
 	public void insert(TimeStamp ts) {
