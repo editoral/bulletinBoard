@@ -17,6 +17,8 @@ public class RM implements Serializable{
 	private PendingQueryQueue queue;
 	private long executeGossipTime;
 	private int[] rms;
+	private Request[] pendingGossips;
+	private boolean isGossipPending;
 	
 	
 	public RM(int id, int[] RMs) {
@@ -28,32 +30,60 @@ public class RM implements Serializable{
 		valueTS = new TimeStamp();
 		updateLog = new Log();
 		queue = new PendingQueryQueue();
+		value = new ArrayList<Message>();
+		executed = new Executed();
+		pendingGossips =  new Request[rms.length];
 	}
 	
 	public void listenerLoop() {
 		Object[] buffer = new Object[2];
 		Request rec = MPI.COMM_WORLD.Irecv(buffer, 0, 2, MPI.OBJECT, MPI.ANY_SOURCE, 0);
-		Status stat = new Status();
-		while(rec.Test() == null) {
+		Status stat = null;
+		boolean testLoop = true;
+		while(testLoop) {
+			System.out.println(rank + " DEBUG I'm Testing for incoming!");
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			stat = rec.Test();
+			stat = rec.Test(); 
+			if (stat != null) {
+				testLoop = false;
+			}
 		}
+
 		dispatch(buffer, stat);
-		if(executeGossipTime < System.currentTimeMillis()) {
-			System.out.println(rank + " It is Time for Gossip!");
-			sendGossip();
-		}
+		gossipHandler();
+
 		listenerLoop();
+	}
+	
+	private void gossipHandler() {
+		if (isGossipPending) {
+			int accumulator = 0;
+			for(int i = 0; i < rms.length; i++) {
+				if (rms[i] != rank) {
+					if (pendingGossips[i].Test() != null) {		
+							accumulator++;			
+					}
+				}					
+			}
+			if (accumulator == (rms.length - 1)) {
+				isGossipPending = false;
+			}			
+		} else {
+			if(executeGossipTime < System.currentTimeMillis()) {
+				System.out.println(rank + " It is Time for Gossip!");
+				sendGossip();
+			}
+		}		
 	}
 	
 	private void dispatch(Object[] buffer, Status stat) {
 		MessageType type = (MessageType) buffer[0];
-		System.out.println(rank + " DEBUG " + type);
-		System.out.println(rank + " DEBUG " + buffer[1]);
+		//System.out.println(rank + " DEBUG " + type);
+		//System.out.println(rank + " DEBUG " + buffer[1]);
 		switch (type) {
 			case UPDATE:handleUpdate(buffer[1], stat);
 						break;
@@ -67,7 +97,6 @@ public class RM implements Serializable{
 	private void handleUpdate(Object obj, Status stat) {
 		System.out.println(rank + " Got an Update from " + stat.source);
 		Update u = (Update) obj;
-		System.out.println(rank + " DEBUG " + u.prev);
 		replicaTS.incrementAtIndex(id);
 		TimeStamp ts = u.prev;
 		ts.setValAtIndex(id, replicaTS.getValAtIndex(id));
@@ -81,7 +110,7 @@ public class RM implements Serializable{
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, stat.source, 0);
 		System.out.println(rank + " I sended an UpdateResponse to " + stat.source);
 		if (u.prev.isAbsoluteSmallerOrEqual(valueTS)) {
-			execute(u);	
+			this.execute(u);	
 		}
 	}
 	
@@ -98,6 +127,7 @@ public class RM implements Serializable{
 	}
 	
 	private void sendGossip() {
+		pendingGossips = new Request[rms.length];
 		for (int i = 0; i < rms.length; i++) {
 			Gossip g = new Gossip();
 			g.log = updateLog;
@@ -105,9 +135,13 @@ public class RM implements Serializable{
 			int target = rms[i];
 			Object[] buffer = new Object[2];
 			buffer[0] = MessageType.GOSSIP;
-			buffer[1] = g;
-			System.out.println(rank + " I'am going to send a Gossip to " + target);
-			MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);
+			buffer[1] = g;		
+			if (target != rank) {
+				System.out.println(rank + " I'am going to send a Gossip to " + target);
+				pendingGossips[i] = MPI.COMM_WORLD.Isend(buffer, 0, 2, MPI.OBJECT, target, 0);
+				isGossipPending = true;
+			}
+			
 		}
 	}
 	
@@ -116,7 +150,7 @@ public class RM implements Serializable{
 		Gossip g = (Gossip) obj;
 		updateLog.insertLog(g.log);
 		replicaTS = replicaTS.max(g.ts);
-		
+		System.out.println(this);
 	}
 
 	private void execute(Update u) {
@@ -126,7 +160,7 @@ public class RM implements Serializable{
 	}
 	
 	private void sendQueryResponse(int target) {
-		System.out.println(rank + " I'am ready to send an UpdateResponse to " + target);
+		System.out.println(rank + " I'am ready to send a QueryResponse to " + target);
 		Object[] buffer = new Object[2];
 		MessageType type = MessageType.QUERY;
 		Query q = new Query();
@@ -135,7 +169,28 @@ public class RM implements Serializable{
 		buffer[0] = type;
 		buffer[1] = q;
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);		
-		System.out.println(rank + " I sended an UpdateResponse to " + target);
+		System.out.println(rank + " I sended an QueryResponse to " + target);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String newLine = System.getProperty("line.separator");
+		sb.append(	"**************************************" + newLine);
+		sb.append(	"TYPE: RM" + newLine);
+		sb.append(	"RANK: " + rank + newLine);
+		sb.append(	"ID: " + id + newLine);
+		sb.append(	"Replica Timestamp: " + replicaTS + newLine);
+		sb.append(updateLog);
+		sb.append(	"Value Timestamp: "+ valueTS + newLine);		
+		sb.append(	"Value: " + newLine);
+		sb.append("----------Start----------" + newLine);
+		for (Message m : value) {
+			sb.append(m.title + newLine);
+		}
+		sb.append("-----------End-----------" + newLine);
+		sb.append(	"**************************************"	);
+		return sb.toString();
 	}
 	
 	

@@ -18,4 +18,10 @@ public class LogRecord implements Serializable {
 	}
 	
 	
+	@Override
+	public String toString() {
+		String result = new String("<RM: " + rm + "; TS: " + ts + "; Msg: " + op.title + "; Msg.TS: " + prev + "; ID: " + cid);
+		return result;
+	}
+	
 }

@@ -6,6 +6,10 @@ import java.util.ArrayList;
 public class Executed implements Serializable {
 	private ArrayList<TimeStamp> stamps;
 	
+	public Executed() {
+		stamps = new ArrayList<TimeStamp>();
+	}
+	
 	public void insert(TimeStamp ts) {
 		stamps.add(ts);
 	}

@@ -27,4 +27,17 @@ public class Log implements Serializable {
 		int index = rand.nextInt(recs.size());
 		return recs.get(index);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String newLine = System.getProperty("line.separator");
+		sb.append("LOG: " + newLine);
+		sb.append("----------Start----------" + newLine);
+		for (LogRecord rec : recs) {
+			sb.append(rec + newLine);
+		}
+		sb.append("-----------End-----------" + newLine);
+		return sb.toString();
+	}
 }

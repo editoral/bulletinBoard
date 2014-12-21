@@ -84,4 +84,18 @@ public class TimeStamp implements Comparable, Serializable {
 		}
 		return result;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+		result.append("{");
+		for (int i = 0; i < vektor.length; i++) {
+			result.append( vektor[i] );
+			if (i < (vektor.length - 1)) {
+				result.append(" | ");
+			}
+		}
+		result.append("}");
+		return result.toString();
+	}
 }

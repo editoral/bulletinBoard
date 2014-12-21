@@ -37,11 +37,11 @@ public class Runner {
 		
 		System.out.println("Booting " + MPI.COMM_WORLD.Rank());
 		TimeStamp.setSize(2);
-		RM.minGossipInterval = 2000;
+		RM.minGossipInterval = 5000;
 		RM rm;
 		FE fe;
 		int rank = MPI.COMM_WORLD.Rank();
-		int[] rms = {1, 2};
+		int[] rms = {0, 1};
 		switch (rank) {
 			case 0 : 
 				rm = new RM(0, rms);
