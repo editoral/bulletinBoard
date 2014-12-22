@@ -23,10 +23,10 @@ public class Log implements Serializable {
 		
 	}
 	
-	public LogRecord getRandomRecord() {
-		int index = rand.nextInt(recs.size());
-		return recs.get(index);
-	}
+//	public LogRecord getRandomRecord() {
+//		int index = rand.nextInt(recs.size());
+//		return recs.get(index);
+//	}
 	
 	@Override
 	public String toString() {

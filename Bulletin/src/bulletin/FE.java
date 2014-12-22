@@ -23,6 +23,7 @@ public class FE implements Serializable {
 		this.rms = RMs;
 		rand = new Random();
 		prev = new TimeStamp();
+		value = new ArrayList<Message>();
 		terminateAt = System.currentTimeMillis() + (runTime * 1000);
 	}
 	
@@ -60,9 +61,22 @@ public class FE implements Serializable {
 	
 	private void sendUpdate() {
 		System.out.println(rank + " Im a FE and I choose to make an Update");
+		executeUpdateSend(Integer.toString(rand.nextInt(10000)));
+	}
+	
+	private void sendResponse() {
+		System.out.println(rank + " Im a FE and I choose to make a Response");
+		if (value.size() > 0) {
+			int index = rand.nextInt(value.size());
+			String title = "Re: " + value.get(index).title;
+			executeUpdateSend(title);			
+		}
+	}
+	
+	private void executeUpdateSend(String title) {
 		Message m = new Message();
 		MessageType type = MessageType.UPDATE;
-		m.title = Integer.toString(rand.nextInt(10000));
+		m.title = title;
 		
 		int randomNr = rand.nextInt(rms.length);
 		int targetRM = rms[randomNr];
@@ -84,9 +98,7 @@ public class FE implements Serializable {
 		prev = prev.max(respU.prev);
 	}
 	
-	private void sendResponse() {
-		System.out.println(rank + " Im a FE and I choose to make a Response");
-	}
+
 	
 	private void sendQuery() {
 		System.out.println(rank + " Im a FE and I choose to make a Query");
@@ -122,4 +134,23 @@ public class FE implements Serializable {
 			MPI.COMM_WORLD.Isend(buffer, 0, 2, MPI.OBJECT, target, 0);
 		}
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		String newLine = System.getProperty("line.separator");
+		sb.append(	"**************************************" + newLine);
+		sb.append(	"TYPE: FE" + newLine);
+		sb.append(	"RANK: " + rank + newLine);
+		sb.append(	"ID: " + id + newLine);
+		sb.append(	"Prev Timestamp: " + prev + newLine);		
+		sb.append(	"Value: " + newLine);
+		sb.append("----------Start----------" + newLine);
+		for (Message m : value) {
+			sb.append(m.title + newLine);
+		}
+		sb.append("-----------End-----------" + newLine);
+		sb.append(	"**************************************"	);
+		return sb.toString();
+	}	
 }

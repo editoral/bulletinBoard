@@ -53,7 +53,7 @@ public class RM implements Serializable{
 			if (stat != null) {
 				testLoop = false;
 			}
-			if (terminated && timeUntilShutdown < System.currentTimeMillis()) {
+			if (terminated && (timeUntilShutdown < System.currentTimeMillis())) {
 				testLoop = false;
 			}
 		}
@@ -105,8 +105,8 @@ public class RM implements Serializable{
 	}
 	
 	private void handleUpdate(Object obj, Status stat) {
-		System.out.println(rank + " Got an Update from " + stat.source);
 		Update u = (Update) obj;
+		System.out.println(rank + " Got an Update from " + stat.source + "UPDATE: " + u);
 		replicaTS.incrementAtIndex(id);
 		TimeStamp ts = u.prev;
 		ts.setValAtIndex(id, replicaTS.getValAtIndex(id));
@@ -125,8 +125,8 @@ public class RM implements Serializable{
 	}
 	
 	private void handleQuery(Object obj, Status stat) {
-		System.out.println(rank + " Got a Query form " + stat.source);
 		Query q = (Query) obj;
+		System.out.println(rank + " Got a Query form " + stat.source + " QUERY: " + q);
 		if (q.prev.isAbsoluteSmallerOrEqual(valueTS)) {
 			sendQueryResponse(stat.source);
 		} else {
@@ -156,8 +156,8 @@ public class RM implements Serializable{
 	}
 	
 	private void handleGossip(Object obj) {
-		System.out.println(rank + " Got a Gossip");
 		Gossip g = (Gossip) obj;
+		System.out.println(rank + " Got a Gossip GOSSIP: " + g);
 		updateLog.insertLog(g.log);
 		replicaTS = replicaTS.max(g.ts);
 		System.out.println(this);
