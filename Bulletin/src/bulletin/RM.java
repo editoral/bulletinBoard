@@ -19,6 +19,8 @@ public class RM implements Serializable{
 	private int[] rms;
 	private Request[] pendingGossips;
 	private boolean isGossipPending;
+	private boolean terminated;
+	private long timeUntilShutdown;
 	
 	
 	public RM(int id, int[] RMs) {
@@ -51,12 +53,18 @@ public class RM implements Serializable{
 			if (stat != null) {
 				testLoop = false;
 			}
+			if (terminated && timeUntilShutdown < System.currentTimeMillis()) {
+				testLoop = false;
+			}
 		}
 
-		dispatch(buffer, stat);
-		gossipHandler();
-
-		listenerLoop();
+		if (terminated && (timeUntilShutdown < System.currentTimeMillis())) {
+			terminate();
+		} else {
+			dispatch(buffer, stat);
+			gossipHandler();
+			listenerLoop();
+		}	
 	}
 	
 	private void gossipHandler() {
@@ -91,6 +99,8 @@ public class RM implements Serializable{
 						break;
 			case GOSSIP: handleGossip(buffer[1]);
 						 break;
+			case TERMINATE: handleTermination();
+							break;
 		}
 	}
 	
@@ -168,6 +178,7 @@ public class RM implements Serializable{
 		q.valueTS = valueTS;
 		buffer[0] = type;
 		buffer[1] = q;
+		System.out.println(rank + " DEBUG ResponseTS " + q.valueTS);
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);		
 		System.out.println(rank + " I sended an QueryResponse to " + target);
 	}
@@ -193,5 +204,15 @@ public class RM implements Serializable{
 		return sb.toString();
 	}
 	
+	private void handleTermination() {
+		if (!terminated) {
+			terminated = true;
+			timeUntilShutdown = System.currentTimeMillis() + 4000;
+		}		
+	}
 	
+	private void terminate() {
+		FileHandler.write("RM" + rank, this.toString());
+		System.out.println(rank + " Im an RM ++++++++++I TERMINATE! ++++++++");
+	}
 }

@@ -1,23 +1,29 @@
 package bulletin;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Random;
 
 import mpi.MPI;
+import mpi.Request;
 
 public class FE implements Serializable {
+	public static long runTime = 10;
+	private long terminateAt;
 	private int id;
 	private Random rand;
 	private int rank = MPI.COMM_WORLD.Rank();
 	private Log mylog;
 	private TimeStamp prev;
 	private int[] rms;
+	private ArrayList<Message> value;
 	
 	public FE(int id, int[] RMs) {
 		this.id = id;
 		this.rms = RMs;
 		rand = new Random();
 		prev = new TimeStamp();
+		terminateAt = System.currentTimeMillis() + (runTime * 1000);
 	}
 	
 	public void start() {
@@ -28,6 +34,12 @@ public class FE implements Serializable {
 			if (nextSend < System.currentTimeMillis()) {
 				chooseAction();
 				nextSend = System.currentTimeMillis() + rand.nextInt(1000) + 500;
+			}
+			if (terminateAt < System.currentTimeMillis()) {
+				sendTermination();
+				FileHandler.write("FE" + rank, this.toString());
+				System.out.println(rank + " Im an FE ++++++++++I TERMINATE! ++++++++");
+				break;
 			}
 		}
 	}
@@ -95,5 +107,19 @@ public class FE implements Serializable {
 		Object[] bufferR = new Object[2];
 		MPI.COMM_WORLD.Recv(bufferR, 0, 2, MPI.OBJECT, targetRM, 0);
 		System.out.println(rank + " Im a FE and i got an Query Response from " + targetRM);
+		
+		Query answer = (Query) bufferR[1];
+		value = answer.value;
+		prev = prev.max(answer.valueTS);
+	}
+	
+	private void sendTermination() {
+		for (int i = 0; i < rms.length; i++) {
+			int target = rms[i];
+			Object[] buffer = new Object[2];
+			buffer[0] = MessageType.TERMINATE;	
+			System.out.println(rank + " Im a FE and im going to send a Termination to " + target);
+			MPI.COMM_WORLD.Isend(buffer, 0, 2, MPI.OBJECT, target, 0);
+		}
 	}
 }

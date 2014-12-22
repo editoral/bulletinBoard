@@ -13,31 +13,29 @@ import mpi.MPI;
 public class Runner {
 
 	public static void main(String[] args) {
-//		File f = new File("C:\\Users\\Marc\\git\\bulletinBoard\\Bulletin\\src\\bulletin\\FileOut.txt");
-//		PrintWriter writer;
-//		try {
-//			writer = new PrintWriter(f);
-//			writer.print("");
-//			writer.close();
-//		} catch (FileNotFoundException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		try {
-//		    FileOutputStream fos = new FileOutputStream(f);
-//		    //we will want to print in standard "System.out" and in "file"
-//		    TeeOutputStream myOut=new TeeOutputStream(System.out, fos);
-//		    PrintStream ps = new PrintStream(myOut);
-//		    System.setOut(ps);
-//		} catch (Exception e) {
-//		    e.printStackTrace();
-//		}
-		
+
 		MPI.Init(args);
 		
+		boolean writeToFile = false;
+		
+		FileHandler.outputLocation = "C:\\Users\\Marc\\Desktop\\mpjTemp";
+		FileHandler.init();
+		if (writeToFile) {
+			try {
+				File f = new File(FileHandler.dir.toPath() + "\\log.txt");
+				PrintStream ps = new PrintStream(f);
+				System.setOut(ps);
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+
+	
 		System.out.println("Booting " + MPI.COMM_WORLD.Rank());
 		TimeStamp.setSize(2);
 		RM.minGossipInterval = 5000;
+		FE.runTime  = 5;
 		RM rm;
 		FE fe;
 		int rank = MPI.COMM_WORLD.Rank();
@@ -60,7 +58,7 @@ public class Runner {
 				fe.start();
 				
 		}
-		
+		System.out.println(rank + " Programm finished");
 		
 		MPI.Finalize();
 	}
