@@ -2,7 +2,7 @@ package bulletin;
 
 import java.io.Serializable;
 
-public class LogRecord implements Serializable {
+public class LogRecord implements Comparable, Serializable {
 	public int rm;
 	public TimeStamp ts;
 	public Message op;
@@ -17,6 +17,22 @@ public class LogRecord implements Serializable {
 		cid = u.cid;
 	}
 	
+	
+	@Override
+	public int compareTo(Object obj) {
+		LogRecord in = (LogRecord) obj;
+		return ts.compareTo(in.ts);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		LogRecord in = (LogRecord) obj;
+		boolean result = false;
+		if (ts.compareTo(in) == 0) {
+			result = true;
+		}
+		return result;
+	}
 	
 	@Override
 	public String toString() {

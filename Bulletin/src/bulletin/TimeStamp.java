@@ -53,7 +53,7 @@ public class TimeStamp implements Comparable, Serializable {
 	public boolean isAbsoluteSmallerOrEqual(TimeStamp ts) {
 		boolean result = true;
 		for(int i = 0; i < size; i++) {
-			if (vektor[i] < ts.getValAtIndex(i)) {
+			if (vektor[i] > ts.getValAtIndex(i)) {
 				result = false;
 			}
 		}
@@ -76,11 +76,14 @@ public class TimeStamp implements Comparable, Serializable {
 	public boolean equals(Object obj) {
 		TimeStamp ts = (TimeStamp) obj;
 		boolean result = false;
-		for(int i = 0; i < size; i++) {
-			if (vektor[i] != ts.getValAtIndex(i)) {
-				result = false;
-				break;
-			}
+//		for(int i = 0; i < size; i++) {
+//			if (vektor[i] != ts.getValAtIndex(i)) {
+//				result = false;
+//				break;
+//			}
+//		}
+		if (this.compareTo(ts) == 0) {
+			result = true;
 		}
 		return result;
 	}

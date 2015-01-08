@@ -14,7 +14,7 @@ public class RM implements Serializable{
 	private TimeStamp valueTS;
 	private ArrayList<Message> value;
 	private Executed executed;
-	private PendingQueryQueue queue;
+	private ArrayList<PendingQuery> queue;
 	private long executeGossipTime;
 	private int[] rms;
 	private Request[] pendingGossips;
@@ -31,7 +31,7 @@ public class RM implements Serializable{
 		replicaTS = new TimeStamp();
 		valueTS = new TimeStamp();
 		updateLog = new Log();
-		queue = new PendingQueryQueue();
+		queue = new ArrayList<PendingQuery>();
 		value = new ArrayList<Message>();
 		executed = new Executed();
 		pendingGossips =  new Request[rms.length];
@@ -43,7 +43,7 @@ public class RM implements Serializable{
 		Status stat = null;
 		boolean testLoop = true;
 		while(testLoop) {
-			System.out.println(rank + " DEBUG I'm Testing for incoming!");
+			//System.out.println(rank + " DEBUG I'm Testing for incoming!");
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -106,7 +106,7 @@ public class RM implements Serializable{
 	
 	private void handleUpdate(Object obj, Status stat) {
 		Update u = (Update) obj;
-		System.out.println(rank + " Got an Update from " + stat.source + "UPDATE: " + u);
+		System.out.println(rank + " Got an Update from " + stat.source + "UPDATE: " + u +  " My valueTS: " + valueTS);
 		replicaTS.incrementAtIndex(id);
 		TimeStamp ts = u.prev;
 		ts.setValAtIndex(id, replicaTS.getValAtIndex(id));
@@ -126,13 +126,15 @@ public class RM implements Serializable{
 	
 	private void handleQuery(Object obj, Status stat) {
 		Query q = (Query) obj;
-		System.out.println(rank + " Got a Query form " + stat.source + " QUERY: " + q);
+		System.out.println(rank + " Got a Query form " + stat.source + " QUERY: " + q + " My valueTS: " + valueTS);
 		if (q.prev.isAbsoluteSmallerOrEqual(valueTS)) {
 			sendQueryResponse(stat.source);
 		} else {
-			PendingQueryQueue que = new PendingQueryQueue();
+			PendingQuery que = new PendingQuery();
+			que = new PendingQuery();
 			que.respondTo = stat.source;
 			que.ts = q.prev;
+			queue.add(que);
 		}
 	}
 	
@@ -160,6 +162,11 @@ public class RM implements Serializable{
 		System.out.println(rank + " Got a Gossip GOSSIP: " + g);
 		updateLog.insertLog(g.log);
 		replicaTS = replicaTS.max(g.ts);
+		ArrayList<LogRecord> toBeExecuted = updateLog.logRecsToExecute(replicaTS);
+		for(LogRecord rec : toBeExecuted) {
+			this.execute(rec);
+		}
+		answerPendingQueries();
 		System.out.println(this);
 	}
 
@@ -167,6 +174,24 @@ public class RM implements Serializable{
 		value.add(u.op);
 		valueTS = valueTS.max(u.prev);
 		executed.insert(u.prev);
+	}
+	
+	private void execute(LogRecord rec) {
+		if (rec.ts.isAbsoluteSmallerOrEqual(replicaTS)) {
+			if(!executed.contains(rec.ts)) {
+				value.add(rec.op);
+				valueTS = valueTS.max(rec.ts);
+				executed.insert(rec.ts);				
+			}			
+		}
+	}
+	
+	private void answerPendingQueries() {
+		for (PendingQuery pend : queue) {
+			if (pend.ts.isAbsoluteSmallerOrEqual(valueTS)) {
+				sendQueryResponse(pend.respondTo);
+			}			
+		}
 	}
 	
 	private void sendQueryResponse(int target) {
@@ -178,7 +203,7 @@ public class RM implements Serializable{
 		q.valueTS = valueTS;
 		buffer[0] = type;
 		buffer[1] = q;
-		System.out.println(rank + " DEBUG ResponseTS " + q.valueTS);
+		//System.out.println(rank + " DEBUG ResponseTS " + q.valueTS);
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, target, 0);		
 		System.out.println(rank + " I sended an QueryResponse to " + target);
 	}
@@ -198,6 +223,13 @@ public class RM implements Serializable{
 		sb.append("----------Start----------" + newLine);
 		for (Message m : value) {
 			sb.append(m.title + newLine);
+		}
+		sb.append("-----------End-----------" + newLine);
+		sb.append(executed);
+		sb.append(	"Pending Queries: " + newLine);
+		sb.append("----------Start----------" + newLine);
+		for (PendingQuery pend : queue) {
+			sb.append("Respond to " + pend.respondTo + " TS " + pend.ts + newLine);
 		}
 		sb.append("-----------End-----------" + newLine);
 		sb.append(	"**************************************"	);
