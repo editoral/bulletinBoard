@@ -88,7 +88,7 @@ public class FE implements Serializable {
 		
 		buffer[0] = type;
 		buffer[1] = u;
-		//System.out.println(rank + " DEBUG Im a FE and I'm going to send an Update to " + targetRM);
+		System.out.println(rank + " DEBUG Im a FE and I'm going to send an Update to " + targetRM);
 		MPI.COMM_WORLD.Send(buffer, 0, 2, MPI.OBJECT, targetRM, 0);
 		System.out.println(rank + " Im a FE and I sended an Update to: " + targetRM);
 		Object[] buffer2 = new Object[2];

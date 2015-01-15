@@ -2,6 +2,7 @@ package bulletin;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import mpi.*;
 
@@ -26,7 +27,7 @@ public class RM implements Serializable{
 	public RM(int id, int[] RMs) {
 		System.out.println(rank + " Im a RM and got intantiated");
 		this.id = id;
-		executeGossipTime = System.currentTimeMillis() + executeGossipTime;
+		executeGossipTime = System.currentTimeMillis() + minGossipInterval;
 		rms = RMs;
 		replicaTS = new TimeStamp();
 		valueTS = new TimeStamp();
@@ -81,10 +82,11 @@ public class RM implements Serializable{
 				isGossipPending = false;
 			}			
 		} else {
-			if(executeGossipTime < System.currentTimeMillis()) {
+//			if(executeGossipTime < System.currentTimeMillis()) {
 				System.out.println(rank + " It is Time for Gossip!");
 				sendGossip();
-			}
+//				executeGossipTime = System.currentTimeMillis() + minGossipInterval;
+//			}
 		}		
 	}
 	
@@ -187,11 +189,23 @@ public class RM implements Serializable{
 	}
 	
 	private void answerPendingQueries() {
-		for (PendingQuery pend : queue) {
+		
+		//Iterator<PendingQuery> iterator = queue.iterator();
+
+		for (Iterator<PendingQuery> iterator = queue.iterator(); iterator.hasNext();) {
+			PendingQuery pend = iterator.next();
 			if (pend.ts.isAbsoluteSmallerOrEqual(valueTS)) {
 				sendQueryResponse(pend.respondTo);
+				iterator.remove();
 			}			
-		}
+		}		
+		
+//		for (PendingQuery pend : queue) {
+//			if (pend.ts.isAbsoluteSmallerOrEqual(valueTS)) {
+//				sendQueryResponse(pend.respondTo);
+//				queue.remove(pend);
+//			}			
+//		}
 	}
 	
 	private void sendQueryResponse(int target) {
